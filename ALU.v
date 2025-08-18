@@ -1,45 +1,26 @@
+module ALU(A,B,Result,ALUControl,OverFlow,Carry,Zero,Negative);
 
-module alu (a,b,alu_control,result,Z,N,V,C);
-  input [31:0] a,b;
-  input [2:0] alu_control;
-  
-  output [31:0] result;
-  output Z,N,V,C;
-  
-  wire [31:0] a_and_b;
-  wire [31:0] a_or_b;
-  wire [31:0] not_b;
-  
-  wire [31:0] mux_1;
-  
-  wire [31:0] sum;
-  
-  wire [31:0] mux_2;
-  
-  wire slt;
-  
-  wire cout;
-  
-  assign a_and_b = a & b;
-  assign a_or_b = a | b;
-  
-  assign mux_1 = (alu_control[0] == 1'b0) ? b : not_b;
-  
-  assign {cout,sum} = a + mux_1 + alu_control[0];
-  
-  assign slt = {31'b0000000000000000000000000000000,sum[31]}
-  
-    assign mux_2 =  (alu_control[2:0] == 3'b000) ? sum : 
-      				(alu_control[2:0] == 3'b001) ? sum : 
-      				(alu_control[2:0] == 3'b010) ? a_and_b :
-                    (alu_control[2:0] == 3'b011) ? a_or_b :
-                    (alu_control[2:0] == 3'b101) ? slt : 32'h00000000;
+    input [31:0]A,B;
+    input [2:0]ALUControl;
+    output Carry,OverFlow,Zero,Negative;
+    output [31:0]Result;
+
+    wire Cout;
+    wire [31:0]Sum;
+
+    assign {Cout,Sum} = (ALUControl[0] == 1'b0) ? A + B :
+                                          (A + ((~B)+1)) ;
+    assign Result = (ALUControl == 3'b000) ? Sum :
+                    (ALUControl == 3'b001) ? Sum :
+                    (ALUControl == 3'b010) ? A & B :
+                    (ALUControl == 3'b011) ? A | B :
+                    (ALUControl == 3'b101) ? {{31{1'b0}},(Sum[31])} : {32{1'b0}};
     
-  assign result = mux_2;
-  
-  assign Z = & (~ result);
-  assign N = result[31];
-  assign C = cout & (~ alu_control[1]);
-  assign v = (~ alu_control[1]) & (a[31] ^ sum[31]) & (~(a[31] ^ b[31] ^ alu_control[0]));
-  
+    assign OverFlow = ((Sum[31] ^ A[31]) & 
+                      (~(ALUControl[0] ^ B[31] ^ A[31])) &
+                      (~ALUControl[1]));
+    assign Carry = ((~ALUControl[1]) & Cout);
+    assign Zero = &(~Result);
+    assign Negative = Result[31];
+
 endmodule  
