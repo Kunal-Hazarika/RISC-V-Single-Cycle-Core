@@ -23,4 +23,4 @@ module ALU(A,B,Result,ALUControl,OverFlow,Carry,Zero,Negative);
     assign Zero = &(~Result);
     assign Negative = Result[31];
 
-endmodule  
+endmodule
